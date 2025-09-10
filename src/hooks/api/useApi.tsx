@@ -18,6 +18,7 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use(
@@ -65,11 +66,12 @@ apiClient.interceptors.response.use(
         const res = await axios.post(
           `http://localhost:5000/api/auth/refresh`,
           {},
-          { withCredentials: true } // cookie included
+          { withCredentials: true }
         );
 
-        const newToken = res.data.token;
-        localStorage.setItem("authToken", newToken);
+        const newToken = res.data.access_token;
+
+        localStorage.setItem("auth_token", newToken);
         apiClient.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${newToken}`;
@@ -77,7 +79,7 @@ apiClient.interceptors.response.use(
 
         return apiClient(originalRequest);
       } catch (err) {
-        localStorage.removeItem("authToken");
+        localStorage.removeItem("auth_token");
         window.location.href = "/auth";
         return Promise.reject(err);
       } finally {
@@ -123,7 +125,7 @@ export const useApi = ({
       cancelTokenRef.current = axios.CancelToken.source();
 
       const config = {
-        url: overrides.url || url,
+        url: overrides.url || "/api" + url,
         method: overrides.method || method,
         data: overrides.data || data,
         params: overrides.params || params,

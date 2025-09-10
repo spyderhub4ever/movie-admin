@@ -1,114 +1,109 @@
+import { useAuthStore } from "@/store/useAuthStore";
 import {
-  Bell,
   ChevronDown,
   Filter,
+  HelpCircle,
+  LogOut,
   Plus,
   Search,
-  Star,
+  Settings,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Topbar() {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
 
   return (
     <header className="h-16 bg-[#1a1d23] flex items-center justify-between px-6">
       <div className="flex items-center space-x-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
+        <div className="relative w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
             placeholder="Search movies, reviews, users..."
-            className="pl-10 pr-4 py-2 bg-gray-800 text-gray-100 placeholder-gray-400 rounded-lg w-80 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-gray-750 transition-colors"
+            className="pl-10 bg-gray-800 text-gray-100 placeholder-gray-400 border-0 focus-visible:ring-2 focus-visible:ring-purple-500/50"
           />
         </div>
       </div>
 
       <div className="flex items-center space-x-4">
-        <button className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center space-x-2">
+        <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white flex items-center space-x-2">
           <Plus className="w-4 h-4" />
           <span>Add Movie</span>
-        </button>
+        </Button>
 
-        <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-gray-400 hover:text-white"
+        >
           <Filter className="w-5 h-5" />
-        </button>
+        </Button>
 
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors relative"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 hover:bg-gray-600 text-gray-300 hover:text-white"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.avatarUrl} alt={user?.name} />
+                <AvatarFallback className="bg-purple-500 text-white">
+                  {user?.name?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden md:block font-medium">
+                {user?.name || "User"}
+              </span>
+              <ChevronDown className="w-4 h-4 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            className="w-56 rounded-xl bg-gray-800 border border-gray-700 shadow-lg p-2"
           >
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
-            </span>
-          </button>
+            <DropdownMenuLabel className="text-gray-400 text-sm px-2 py-1">
+              {user?.email}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-gray-700" />
 
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50">
-              <div className="p-4 border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">
-                  Notifications
-                </h3>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="p-4 border-b border-gray-700 hover:bg-gray-800 transition-colors"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                        <Star className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-white font-medium">
-                          New review submitted
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          User reviewed "Inception" - 5 stars
-                        </p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          2 minutes ago
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+            <DropdownMenuItem className="flex items-center gap-2 text-gray-200 hover:bg-gray-700 rounded-md px-2 py-2">
+              <User className="w-4 h-4" /> Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center gap-2 text-gray-200 hover:bg-gray-700 rounded-md px-2 py-2">
+              <Settings className="w-4 h-4" /> Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center gap-2 text-gray-200 hover:bg-gray-700 rounded-md px-2 py-2">
+              <HelpCircle className="w-4 h-4" /> Help
+            </DropdownMenuItem>
 
-        <div className="relative">
-          <button
-            onClick={() => setShowProfile(!showProfile)}
-            className="flex items-center space-x-3 p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-teal-500 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
-            </div>
-            <ChevronDown className="w-4 h-4" />
-          </button>
+            <DropdownMenuSeparator className="bg-gray-700" />
 
-          {showProfile && (
-            <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50">
-              <div className="p-2">
-                {["Profile", "Settings", "Help", "Sign Out"].map((item) => (
-                  <button
-                    key={item}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+            <DropdownMenuItem
+              onClick={() => {
+                logout();
+                navigate("/auth");
+              }}
+              className="flex items-center gap-2 text-red-500 hover:bg-red-600/20 rounded-md px-2 py-2"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

@@ -1,31 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import AdminLayout from "./layouts/AdminLayout";
-import { protectedRoutes, publicRoutes } from "./routes";
-import ProtectedRoute from "./middlewares/ProtectedRoute";
 import { Toaster } from "sonner";
+import { MainLayout } from "./layouts/MainLayout";
 
 function App() {
   return (
     <>
-      <Router>
-        <Routes>
-          {publicRoutes.map((route, index) => (
-            <Route key={index} path={route.path} element={route.element} />
-          ))}
-
-          {protectedRoutes.map((route, index) => (
-            <Route
-              key={index}
-              path={route.path}
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>{route.element}</AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-          ))}
-        </Routes>
-      </Router>
+      <MainLayout />
       <Toaster />
     </>
   );

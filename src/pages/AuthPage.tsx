@@ -15,7 +15,7 @@ import {
   EyeOff,
   Sparkles,
 } from "lucide-react";
-import { usePost } from "@/hooks/useApi";
+import { usePost } from "@/hooks/api/useApi";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -32,7 +32,7 @@ export default function AuthPage() {
     password: "",
   });
 
-  const { execute: login, loading: loginLoading } = usePost("/api/auth/login", {
+  const { execute: login, loading: loginLoading } = usePost("/auth/login", {
     onSuccess: (data) => {
       localStorage.setItem("auth_token", data.access_token);
       setAccessToken(data.access_token);
@@ -42,10 +42,10 @@ export default function AuthPage() {
   });
 
   const { execute: register, loading: registerLoading } = usePost(
-    "/api/auth/register",
+    "/auth/register",
     {
       onSuccess: (data) => {
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("auth_token", data.token);
       },
     }
   );
@@ -60,7 +60,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 relative overflow-hidden">
-      {/* Left side hero */}
       <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
         <div className="relative z-10 text-center">
           <div className="mb-8 relative">

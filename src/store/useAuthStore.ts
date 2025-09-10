@@ -1,24 +1,40 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-interface AppState {
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+};
+
+type AuthState = {
+  user: User | null;
   accessToken: string | null;
-  user: { id: string; name: string; role: string } | null;
-  isSidebarOpen: boolean;
-
-  setAccessToken: (token: string) => void;
-  setUser: (user: AppState["user"]) => void;
+  setUser: (user: User | null) => void;
+  setAccessToken: (token: string | null) => void;
   logout: () => void;
-  toggleSidebar: () => void;
-}
+};
 
-export const useAuthStore = create<AppState>((set) => ({
-  accessToken: null,
-  user: null,
-  isSidebarOpen: true,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
 
-  setAccessToken: (token) => set({ accessToken: token }),
-  setUser: (user) => set({ user }),
-  logout: () => set({ accessToken: null, user: null }),
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-}));
+      setUser: (user) => set({ user }),
+      setAccessToken: (token) => set({ accessToken: token }),
+
+      logout: () => {
+        set({ user: null, accessToken: null });
+      },
+    }),
+    {
+      name: "auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+      }),
+    }
+  )
+);
