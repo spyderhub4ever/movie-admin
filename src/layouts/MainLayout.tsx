@@ -1,13 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "@/middlewares/ProtectedRoute";
 import { protectedRoutes, publicRoutes } from "@/routes";
-import { useLoadUser } from "@/hooks/user/useLoadUser";
 import GuestRoute from "@/middlewares/GuestRoute";
 import AdminLayout from "./AdminLayout";
 
 export const MainLayout = () => {
-  useLoadUser();
-
   return (
     <div>
       <Router>

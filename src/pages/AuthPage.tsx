@@ -33,7 +33,10 @@ export default function AuthPage() {
   });
 
   const { execute: login, loading: loginLoading } = usePost("/auth/login", {
-    onSuccess: (data) => {
+    onSuccess: (data: {
+      access_token: string;
+      user: { id: string; name: string; email: string; image?: string };
+    }) => {
       localStorage.setItem("auth_token", data.access_token);
       setAccessToken(data.access_token);
       setUser(data.user);
@@ -44,19 +47,11 @@ export default function AuthPage() {
   const { execute: register, loading: registerLoading } = usePost(
     "/auth/register",
     {
-      onSuccess: (data) => {
+      onSuccess: (data: { token: string }) => {
         localStorage.setItem("auth_token", data.token);
       },
     }
   );
-
-  const handleRegister = () => {
-    register({ data: registerForm });
-  };
-
-  const handleLogin = async () => {
-    await login({ data: loginForm });
-  };
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 relative overflow-hidden">
@@ -188,7 +183,7 @@ export default function AuthPage() {
                     </div>
 
                     <Button
-                      onClick={handleLogin}
+                      onClick={() => login({ data: loginForm })}
                       className="cursor-pointer w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl h-12 shadow-lg transition-all duration-300 transform hover:scale-[1.02]"
                       disabled={loginLoading}
                     >
@@ -310,7 +305,7 @@ export default function AuthPage() {
                     </div>
 
                     <Button
-                      onClick={handleRegister}
+                      onClick={() => register({ data: registerForm })}
                       className="cursor-pointer w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl h-12 shadow-lg transition-all duration-300 transform hover:scale-[1.02]"
                       disabled={registerLoading}
                     >

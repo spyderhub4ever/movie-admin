@@ -7,8 +7,13 @@ export function useLoadUser() {
   const user = useAuthStore((state) => state.user);
   const accessToken = localStorage.getItem("auth_token");
 
-  const { data, error, execute } = useGet("/auth/me", {
+  const { error, execute } = useGet("/auth/profile", {
     immediate: false,
+    onSuccess: (data: {
+      user: { id: string; name: string; email: string; image?: string };
+    }) => {
+      setUser(data.user);
+    },
   });
 
   useEffect(() => {
@@ -17,12 +22,6 @@ export function useLoadUser() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
-
-  useEffect(() => {
-    if (data?.user) {
-      setUser(data.user);
-    }
-  }, [data, setUser]);
 
   useEffect(() => {
     if (error) {

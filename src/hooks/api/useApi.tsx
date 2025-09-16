@@ -1,15 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import axios, { type AxiosRequestConfig, type CancelTokenSource } from "axios";
+import axios, {
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type CancelTokenSource,
+} from "axios";
 import { toast } from "sonner";
 
-type ValidationIssue = {
+export type ValidationIssue = {
   field: string;
   message: string;
+};
+
+export type ApiErrorResponse = {
+  message: string;
+  errors?: ValidationIssue[];
+};
+
+export type NormalizedApiError = {
+  message: string;
+  status?: number;
+  data?: ApiErrorResponse;
+  code?: string;
 };
 
 type ApiError = {
   message: string;
   errors?: ValidationIssue[];
+};
+
+type ApiState<T> = {
+  data: T | null;
+  loading: boolean;
+  error: NormalizedApiError;
 };
 
 const apiClient = axios.create({
@@ -91,29 +113,42 @@ apiClient.interceptors.response.use(
   }
 );
 
-export const useApi = ({
+export function useApi<
+  TResponse = unknown,
+  TBody extends Record<string, unknown> | FormData | null = null
+>({
   url = "",
   method = "GET",
   data = null,
   params = {},
   headers = {},
   immediate = false,
+  isFormData = false,
   axiosConfig = {},
-  onSuccess = null,
-  onError = null,
-} = {}) => {
-  const [state, setState] = useState({
+  onSuccess,
+  onError,
+}: {
+  url?: string;
+  method?: string;
+  data?: TBody;
+  params?: Record<string, unknown>;
+  headers?: Record<string, string>;
+  immediate?: boolean;
+  isFormData?: boolean;
+  axiosConfig?: AxiosRequestConfig;
+  onSuccess?: (data: TResponse, response: AxiosResponse<TResponse>) => void;
+  onError?: (error: unknown, rawError: unknown) => void;
+} = {}) {
+  const [state, setState] = useState<ApiState<TResponse>>({
     data: null,
     loading: false,
     error: null,
   });
 
   const cancelTokenRef = useRef<CancelTokenSource | null>(null);
-  const mountedRef = useRef(true);
 
   useEffect(() => {
     return () => {
-      mountedRef.current = false;
       if (cancelTokenRef.current) {
         cancelTokenRef.current.cancel("Component unmounted");
       }
@@ -124,20 +159,24 @@ export const useApi = ({
     async (overrides: AxiosRequestConfig = {}) => {
       cancelTokenRef.current = axios.CancelToken.source();
 
-      const config = {
+      const config: AxiosRequestConfig = {
         url: overrides.url || "/api" + url,
         method: overrides.method || method,
-        data: overrides.data || data,
-        params: overrides.params || params,
+        data: overrides.data ?? data,
+        params: overrides.params ?? params,
         headers: { ...headers, ...overrides.headers },
         cancelToken: cancelTokenRef.current.token,
         ...axiosConfig,
         ...overrides,
       };
 
+      if (isFormData) {
+        config.headers!["Content-Type"] = "multipart/form-data";
+      }
+
       if (
         ["GET", "DELETE", "HEAD", "OPTIONS"].includes(
-          config.method.toUpperCase()
+          (config.method || "").toUpperCase()
         )
       ) {
         delete config.data;
@@ -146,70 +185,65 @@ export const useApi = ({
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const response = await apiClient(config);
+        const response = await apiClient<TResponse>(config);
 
-        setState({
-          data: response.data,
-          loading: false,
-          error: null,
-        });
+        setState({ data: response.data, loading: false, error: null });
 
-        if (onSuccess) {
-          onSuccess(response.data, response);
-        }
+        onSuccess?.(response.data, response);
 
         return { data: response.data, response };
-      } catch (err) {
-        if (axios.isCancel(err)) {
-          return;
-        }
+      } catch (err: unknown) {
+        if (axios.isCancel(err)) return;
 
-        const error = {
-          message: err.message,
-          status: err.response?.status,
-          data: err.response?.data,
-          code: err.code,
-        };
+        if (axios.isAxiosError(err)) {
+          const error = {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+            code: err.code,
+          };
 
-        setState({
-          data: null,
-          loading: false,
-          error,
-        });
+          setState({ data: null, loading: false, error });
 
-        const apiError = error.data as ApiError;
+          const apiError = error.data as ApiError;
 
-        if (apiError?.errors) {
-          apiError.errors.forEach((issue) => {
-            toast.error("Validation Error", {
-              description: `${issue.field.replace("body.", "")}: ${
-                issue.message
-              }`,
+          if (apiError?.errors) {
+            apiError.errors.forEach((issue) => {
+              toast.error("Validation Error", {
+                description: `${issue.field.replace("body.", "")}: ${
+                  issue.message
+                }`,
+              });
             });
-          });
-        } else {
-          toast.error("Error", {
-            description:
-              apiError?.message || error.message || "Something went wrong",
-          });
+          } else {
+            toast.error("Error", {
+              description:
+                apiError?.message || error.message || "Something went wrong",
+            });
+          }
+
+          onError?.(error, err);
+          throw error;
         }
 
-        if (onError) {
-          onError(error, err);
-        }
-
-        throw error;
+        throw err;
       }
     },
-    [url, method, data, params, headers, axiosConfig, onSuccess, onError]
+    [
+      url,
+      method,
+      data,
+      params,
+      headers,
+      axiosConfig,
+      isFormData,
+      onSuccess,
+      onError,
+    ]
   );
 
   const reset = useCallback(() => {
-    setState({
-      data: null,
-      loading: false,
-      error: null,
-    });
+    setState({ data: null, loading: false, error: null });
   }, []);
 
   useEffect(() => {
@@ -218,12 +252,8 @@ export const useApi = ({
     }
   }, [immediate, execute, url]);
 
-  return {
-    ...state,
-    execute,
-    reset,
-  };
-};
+  return { ...state, execute, reset };
+}
 
 export const useGet = (url, config = {}) => {
   return useApi({

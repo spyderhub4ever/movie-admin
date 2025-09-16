@@ -5,7 +5,7 @@ type User = {
   id: string;
   name: string;
   email: string;
-  avatarUrl?: string;
+  image?: string;
 };
 
 type AuthState = {
@@ -27,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, accessToken: null });
+        localStorage.clear();
       },
     }),
     {

@@ -1,3 +1,4 @@
+import { useLoadUser } from "@/hooks/user/useLoadUser";
 import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
@@ -6,6 +7,8 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const token = localStorage.getItem("auth_token");
+
+  useLoadUser();
 
   if (!token) {
     return <Navigate to="/auth" replace />;
